@@ -26,7 +26,7 @@ class ParticipantController extends Controller
 
         $rules = [
             'nombre_persona' => ['required', 'string', 'max:255'],
-            'cedula' => ['required', 'string', 'min:4', 'max:20', Rule::unique('fondas', 'cedula')->where(fn ($q) => $q->where('event_id', $event->id))],
+            'cedula' => ['required', 'string', 'min:4', 'max:20', Rule::unique('participants', 'cedula')->where(fn ($q) => $q->where('event_id', $event->id))],
             'telefono' => ['required', 'regex:/^6[0-9]{7}$/'],
             'nombre_fonda' => ['required', 'string', 'max:255'],
             'ubicacion' => ['required', 'string', 'max:500'],

@@ -9,11 +9,11 @@ class CsvService
 {
     public function generate(iterable $data, ?string $filename = null): StreamedResponse
     {
-        $filename ??= 'resultados_fonda_challenge_' . date('Ymd') . '.csv';
+        $filename ??= 'resultados_evento_' . date('Ymd') . '.csv';
 
         $callback = function () use ($data): void {
             $output = fopen('php://output', 'w');
-            fputcsv($output, ['Posicion', 'Fonda', 'Responsable', 'Plato', 'Promedio Jueces', 'Ajuste Admin', 'Total', 'Votos Publicos']);
+            fputcsv($output, ['Posicion', 'Participante', 'Responsable', 'Propuesta/Plato', 'Promedio Jueces', 'Ajuste Admin', 'Total', 'Votos Publicos']);
 
             $rows = $data instanceof Collection ? $data->values() : collect($data)->values();
 

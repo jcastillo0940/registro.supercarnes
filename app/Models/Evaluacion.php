@@ -11,7 +11,7 @@ class Evaluacion extends Model
 
     protected $fillable = [
         'user_id', 
-        'fonda_id', 
+        'participant_id', 
         'criterio_id', 
         'puntaje', 
         'notas'
@@ -26,11 +26,11 @@ class Evaluacion extends Model
     }
 
     /**
-     * Relación con la Fonda que fue evaluada
+     * Relación con el Participante que fue evaluado
      */
-    public function fonda()
+    public function participant()
     {
-        return $this->belongsTo(Participant::class, 'fonda_id');
+        return $this->belongsTo(Participant::class, 'participant_id');
     }
 
     /**

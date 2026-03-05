@@ -6,19 +6,33 @@ use Illuminate\Database\Eloquent\Model;
 
 class Participant extends Model
 {
-    protected $table = 'fondas';
+    // Usará el nombre por defecto 'participants' después de la migración.
 
     protected $fillable = [
         'event_id',
+        'uuid',
         'nombre_persona',
         'cedula',
         'telefono',
         'nombre_fonda',
         'ubicacion',
         'plato_preparar',
+        'datos_extra',
         'qr_code',
         'ajuste_admin',
         'orden_visita',
+    ];
+
+    /**
+     * Usar el UUID para el enlace de evaluación.
+     */
+    public function getRouteKeyName()
+    {
+        return 'uuid';
+    }
+
+    protected $casts = [
+        'datos_extra' => 'array',
     ];
 
     public function event()
@@ -28,7 +42,7 @@ class Participant extends Model
 
     public function evaluaciones()
     {
-        return $this->hasMany(Evaluacion::class, 'fonda_id');
+        return $this->hasMany(Evaluacion::class, 'participant_id');
     }
 
     public function getPromedioAttribute()

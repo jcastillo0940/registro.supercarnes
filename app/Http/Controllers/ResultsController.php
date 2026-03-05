@@ -68,9 +68,9 @@ class ResultsController extends Controller
         $event = $selectedEventId ? $events->firstWhere('id', $selectedEventId) : $events->first();
 
         $judgeScores = DB::table('evaluaciones')
-            ->select('fonda_id', DB::raw('AVG(puntaje) as judge_avg'))
+            ->select('participant_id', DB::raw('AVG(puntaje) as judge_avg'))
             ->when($selectedCriterioId, fn ($q) => $q->where('criterio_id', $selectedCriterioId))
-            ->groupBy('fonda_id');
+            ->groupBy('participant_id');
 
         $publicVotes = DB::table('public_votes')
             ->select('participant_id', DB::raw('COUNT(*) as public_votes_count'))
@@ -78,21 +78,21 @@ class ResultsController extends Controller
 
         $rankingQuery = Participant::query()
             ->select([
-                'fondas.id',
-                'fondas.uuid',
-                'fondas.nombre_fonda',
-                'fondas.nombre_persona',
-                'fondas.plato_preparar',
-                'fondas.ajuste_admin',
+                'participants.id',
+                'participants.uuid',
+                'participants.nombre_fonda',
+                'participants.nombre_persona',
+                'participants.plato_preparar',
+                'participants.ajuste_admin',
                 DB::raw('COALESCE(js.judge_avg, 0) as judge_avg'),
                 DB::raw('COALESCE(pv.public_votes_count, 0) as public_votes_count'),
-                DB::raw('(COALESCE(js.judge_avg, 0) + fondas.ajuste_admin) as final_score'),
+                DB::raw('(COALESCE(js.judge_avg, 0) + participants.ajuste_admin) as final_score'),
             ])
-            ->leftJoinSub($judgeScores, 'js', fn ($join) => $join->on('js.fonda_id', '=', 'fondas.id'))
-            ->leftJoinSub($publicVotes, 'pv', fn ($join) => $join->on('pv.participant_id', '=', 'fondas.id'))
-            ->when($event, fn ($q) => $q->where('fondas.event_id', $event->id))
+            ->leftJoinSub($judgeScores, 'js', fn ($join) => $join->on('js.participant_id', '=', 'participants.id'))
+            ->leftJoinSub($publicVotes, 'pv', fn ($join) => $join->on('pv.participant_id', '=', 'participants.id'))
+            ->when($event, fn ($q) => $q->where('participants.event_id', $event->id))
             ->orderByDesc('final_score')
-            ->orderBy('fondas.nombre_fonda');
+            ->orderBy('participants.nombre_fonda');
 
         $ranking = $rankingQuery->get()->map(function ($row, $index) {
             return [

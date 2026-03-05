@@ -12,11 +12,11 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $fondas = Participant::with('evaluaciones')->get()->sortByDesc(function ($f) {
-            return $f->puntaje_final;
+        $participants = Participant::with('evaluaciones')->get()->sortByDesc(function ($p) {
+            return $p->puntaje_final;
         });
 
-        return view('admin.dashboard', compact('fondas'));
+        return view('admin.dashboard', compact('participants'));
     }
 
     public function participantes()
@@ -63,43 +63,44 @@ class AdminController extends Controller
             'role' => ['required', Rule::in(['admin', 'judge'])],
         ]);
 
-        User::create([
+        $user = new User([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => bcrypt($validated['password']),
-            'role' => $validated['role'],
         ]);
+        $user->role = $validated['role'];
+        $user->save();
 
         return back()->with('success', 'Usuario creado');
     }
 
-    public function eliminarFonda(Participant $fonda)
+    public function eliminarParticipante(Participant $participant)
     {
-        $fonda->delete();
+        $participant->delete();
 
         return back()->with('success', 'Participante eliminado');
     }
 
-    public function ajustarPuntos(Request $request, Participant $fonda)
+    public function ajustarPuntos(Request $request, Participant $participant)
     {
         $validated = $request->validate([
             'ajuste' => ['required', 'numeric', 'between:-100,100'],
         ]);
 
-        $fonda->update(['ajuste_admin' => $validated['ajuste']]);
+        $participant->update(['ajuste_admin' => $validated['ajuste']]);
 
         return back()->with('success', 'Ajuste guardado');
     }
 
     public function exportar()
     {
-        $fondas = Participant::all()->sortByDesc(function ($f) {
-            return $f->puntaje_final;
+        $participants = Participant::all()->sortByDesc(function ($p) {
+            return $p->puntaje_final;
         });
 
         $csvExporter = new \App\Services\CsvService();
 
-        return $csvExporter->generate($fondas);
+        return $csvExporter->generate($participants);
     }
 
     public function descargarPDF()
