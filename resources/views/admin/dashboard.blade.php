@@ -39,7 +39,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-yellow-700 text-xs font-black uppercase tracking-wider mb-1">Puntaje Más Alto</p>
-                    <p class="text-4xl font-black text-yellow-700">{{ $fondas->first()->puntaje_final ?? 0 }}</p>
+                    <p class="text-4xl font-black text-yellow-700">{{ $fondas->first()->final_score ?? 0 }}</p>
                 </div>
                 <div class="bg-yellow-200 rounded-2xl p-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -53,7 +53,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-green-700 text-xs font-black uppercase tracking-wider mb-1">Promedio General</p>
-                    <p class="text-4xl font-black text-green-700">{{ number_format($fondas->avg('puntaje_final'), 1) }}</p>
+                    <p class="text-4xl font-black text-green-700">{{ number_format($fondas->avg('final_score'), 1) }}</p>
                 </div>
                 <div class="bg-green-200 rounded-2xl p-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +110,7 @@
                         <!-- Puntaje Jueces -->
                         <td class="p-5 text-center">
                             <span class="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-black text-lg">
-                                {{ number_format($fonda->promedio, 1) }}
+                                {{ number_format($fonda->judge_avg ?? 0, 1) }}
                             </span>
                         </td>
 
@@ -132,7 +132,7 @@
                         <!-- Puntaje Final -->
                         <td class="p-5 text-center">
                             <span class="inline-block bg-gradient-to-r from-[#FFD100] to-[#FFA500] text-[#004691] px-6 py-3 rounded-2xl font-black text-2xl shadow-lg">
-                                {{ number_format($fonda->puntaje_final, 1) }}
+                                {{ number_format($fonda->final_score ?? 0, 1) }}
                             </span>
                         </td>
                     </tr>
@@ -167,7 +167,7 @@
                         </div>
                     </div>
                     <span class="bg-gradient-to-r from-[#FFD100] to-[#FFA500] text-[#004691] px-4 py-2 rounded-xl font-black text-xl shrink-0">
-                        {{ number_format($fonda->puntaje_final, 1) }}
+                        {{ number_format($fonda->final_score ?? 0, 1) }}
                     </span>
                 </div>
 
@@ -175,7 +175,7 @@
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <div class="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
                         <div class="text-xs text-blue-600 font-bold uppercase mb-1">Puntaje Jueces</div>
-                        <div class="text-xl font-black text-blue-700">{{ number_format($fonda->promedio, 1) }}</div>
+                        <div class="text-xl font-black text-blue-700">{{ number_format($fonda->judge_avg ?? 0, 1) }}</div>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
                         <div class="text-xs text-gray-600 font-bold uppercase mb-1">Ajuste</div>
