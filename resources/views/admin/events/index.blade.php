@@ -9,8 +9,8 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Evento</th>
-                <th>Tema</th>
+                <th>Nombre</th>
+                <th>Slug</th>
                 <th>Tipo votación</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -20,21 +20,8 @@
             @forelse($events as $event)
                 <tr>
                     <td>{{ $event->id }}</td>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            @if($event->logo_url)
-                                <img src="{{ $event->logo_url }}" style="height:30px;width:30px;object-fit:cover;border-radius:6px;">
-                            @endif
-                            <div>
-                                <strong>{{ $event->nombre }}</strong><br>
-                                <small>{{ $event->slug }}</small>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span style="display:inline-block;width:14px;height:14px;background:{{ $event->color_primario ?: '#1d4ed8' }};border-radius:50%"></span>
-                        <span style="display:inline-block;width:14px;height:14px;background:{{ $event->color_secundario ?: '#0f172a' }};border-radius:50%"></span>
-                    </td>
+                    <td>{{ $event->nombre }}</td>
+                    <td>{{ $event->slug }}</td>
                     <td>{{ $event->tipo_votacion }}</td>
                     <td>{{ $event->estado }}</td>
                     <td>

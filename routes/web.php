@@ -5,7 +5,6 @@ use App\Http\Controllers\FondaController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CriterioController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\VotacionJuradoController;
 

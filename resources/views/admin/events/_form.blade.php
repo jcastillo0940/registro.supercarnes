@@ -8,19 +8,12 @@
     <input type="text" name="slug" class="form-control" value="{{ old('slug', $event->slug ?? '') }}" required>
 </div>
 <div class="mb-3">
-    <label>Logo</label>
-    <input type="file" name="logo" class="form-control" accept="image/*">
-    @if(!empty($event?->logo_url))
-        <img src="{{ $event->logo_url }}" class="mt-2" style="height:60px;width:60px;object-fit:cover;border-radius:8px;">
-    @endif
+    <label>Logo (ruta/URL)</label>
+    <input type="text" name="logo" class="form-control" value="{{ old('logo', $event->logo ?? '') }}">
 </div>
 <div class="mb-3">
     <label>Color primario</label>
-    <input type="color" name="color_primario" class="form-control" value="{{ old('color_primario', $event->color_primario ?? '#1d4ed8') }}">
-</div>
-<div class="mb-3">
-    <label>Color secundario</label>
-    <input type="color" name="color_secundario" class="form-control" value="{{ old('color_secundario', $event->color_secundario ?? '#0f172a') }}">
+    <input type="text" name="color_primario" class="form-control" value="{{ old('color_primario', $event->color_primario ?? '') }}">
 </div>
 <div class="mb-3">
     <label>Fecha inicio</label>
