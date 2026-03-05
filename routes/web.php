@@ -7,6 +7,7 @@ use App\Http\Controllers\CriterioController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\VotacionJuradoController;
+use App\Http\Controllers\ResultsController;
 
 /*
 |--------------------------------------------------------------------------

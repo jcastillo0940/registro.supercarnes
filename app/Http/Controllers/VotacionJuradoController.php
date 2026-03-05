@@ -5,26 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Participant;
 use App\Models\Evaluacion;
+use App\Models\Participant;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VotacionJuradoController extends Controller
 {
-    /**
-     * Muestra el listado de jurados y sus votaciones detalladas
-     */
     public function index(Request $request)
     {
-        // Obtenemos todos los usuarios que tienen al menos una evaluación (los jurados)
         $jurados = User::whereHas('evaluaciones')->get();
-
-        // Si se seleccionó un jurado específico, cargamos sus votos
         $juradoSeleccionado = null;
         $votaciones = [];
 
         if ($request->has('jurado_id')) {
             $juradoSeleccionado = User::findOrFail($request->jurado_id);
-            
-            // Agrupamos las evaluaciones por fonda para que sea fácil de leer
             $votaciones = Evaluacion::where('user_id', $request->jurado_id)
                 ->with(['fonda', 'criterio'])
                 ->get()
@@ -33,6 +28,7 @@ class VotacionJuradoController extends Controller
 
         return view('admin.votaciones_jurado', compact('jurados', 'juradoSeleccionado', 'votaciones'));
     }
+
     public function consolidado()
         {
             $jurados = User::whereHas('evaluaciones')->get();
