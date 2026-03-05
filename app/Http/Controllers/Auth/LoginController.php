@@ -24,7 +24,7 @@ class LoginController extends Controller
                 return redirect()->intended(route('admin.dashboard'));
             }
 
-            if ($user->role === 'jurado') {
+            if (in_array($user->role, ['jurado', 'judge'], true)) {
                 return redirect()->intended(route('jurado.panel'));
             }
 
