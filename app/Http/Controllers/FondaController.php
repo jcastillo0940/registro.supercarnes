@@ -9,6 +9,7 @@ use App\Models\Evaluacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Generator as QrCodeGenerator;
 use Exception;
 
@@ -70,7 +71,7 @@ class FondaController extends Controller
             $qrFullPath = base_path('public_html/' . $qrPath);
             
             // URL que contendrá el QR
-            $qrUrl = url('/evaluar/' . $fonda->id);
+            $qrUrl = url('/evaluar/' . $fonda->uuid);
             
             // SOLUCIÓN: Usar instancia directa (igual que el test exitoso)
             $qrGenerator = new QrCodeGenerator;

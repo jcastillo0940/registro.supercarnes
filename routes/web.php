@@ -17,6 +17,9 @@ Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/registro', [FondaController::class, 'register'])->name('fonda.register');
 Route::post('/register-fonda', [FondaController::class, 'store'])->name('fonda.store');
 
+Route::get('/{eventSlug}/registro', [ParticipantController::class, 'create'])->name('participants.register');
+Route::post('/{eventSlug}/registro', [ParticipantController::class, 'store'])->name('participants.store');
+
 /*
 |--------------------------------------------------------------------------
 | Autenticación
