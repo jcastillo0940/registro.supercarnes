@@ -1,67 +1,64 @@
-@extends('layouts.admin') {{-- Usamos el layout con sidebar --}}
+@extends('layouts.admin')
 @section('content')
-<div class="max-w-md mx-auto">
-    <h2 class="text-2xl font-bold text-[#004691] mb-6 text-center italic">Panel de Evaluación</h2>
-    
-    <!-- Botones de Acción -->
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <a href="{{ route('jurado.scanner') }}" 
-           class="bg-[#004691] hover:bg-[#003571] text-white p-4 rounded-2xl text-center font-black uppercase text-sm shadow-lg transition flex flex-col items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-            </svg>
-            Escanear QR
-        </a>
-        
-        <button onclick="document.getElementById('searchInput').focus()" 
-                class="bg-[#FFD100] hover:bg-[#e6bd00] text-[#004691] p-4 rounded-2xl text-center font-black uppercase text-sm shadow-lg transition flex flex-col items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            Buscar Manual
-        </button>
-    </div>
-    
-    <div class="mb-6">
-        <input type="text" id="searchInput" placeholder="Buscar fonda por nombre..." 
-               class="w-full p-4 rounded-2xl border-2 border-gray-100 shadow-sm focus:border-yellow-400 outline-none">
-    </div>
-    
-    <div class="space-y-4" id="fondaList">
-        @foreach($fondas as $fonda)
-            @php
-                $yaVoto = $fonda->evaluaciones->where('user_id', auth()->id())->first();
-            @endphp
-            
-            <div class="fonda-card bg-white p-5 rounded-3xl shadow-md border-l-8 {{ $yaVoto ? 'border-gray-300 opacity-60' : 'border-[#FFD100]' }}">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="font-black text-lg text-[#004691]">{{ $fonda->nombre_fonda }}</h3>
-                        <p class="text-xs text-gray-500 uppercase font-bold">{{ $fonda->plato_preparar }}</p>
-                    </div>
-                    
-                    @if($yaVoto)
-                        <span class="bg-gray-100 text-gray-400 px-4 py-2 rounded-xl text-xs font-black uppercase">
-                            ✅ Ya Calificado
-                        </span>
-                    @else
-                        <a href="/evaluar/{{ $fonda->id }}" 
-                           class="bg-[#004691] text-white px-6 py-2 rounded-xl text-xs font-black uppercase shadow-lg active:scale-90 transition">
-                            Votar
-                        </a>
-                    @endif
-                </div>
-            </div>
-        @endforeach
-    </div>
-</div>
+<div id="judge-app"></div>
 <script>
-    // Filtro simple de búsqueda
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let value = this.value.toLowerCase();
-        document.querySelectorAll('.fonda-card').forEach(card => {
-            card.style.display = card.innerText.toLowerCase().includes(value) ? 'block' : 'none';
-        });
-    });
+    window.__JUDGE_PANEL__ = @json($initialState);
+</script>
+<script type="module">
+    import React, { useMemo, useState } from 'https://esm.sh/react@18';
+    import { createRoot } from 'https://esm.sh/react-dom@18/client';
+
+    const data = window.__JUDGE_PANEL__ || { events: [], participants: [] };
+
+    function App() {
+        const [eventId, setEventId] = useState(data.events[0]?.id || '');
+        const [term, setTerm] = useState('');
+
+        const list = useMemo(() => data.participants.filter((p) => {
+            const eventOk = eventId ? Number(p.event_id) === Number(eventId) : true;
+            const searchOk = `${p.nombre_fonda} ${p.plato_preparar}`.toLowerCase().includes(term.toLowerCase());
+            return eventOk && searchOk;
+        }), [eventId, term]);
+
+        return React.createElement('div', { className: 'max-w-3xl mx-auto space-y-4' },
+            React.createElement('h2', { className: 'text-2xl font-bold text-[#004691]' }, 'Panel del Juez (React)'),
+            React.createElement('div', { className: 'grid md:grid-cols-3 gap-3' },
+                React.createElement('select', {
+                    className: 'border rounded p-2',
+                    value: eventId,
+                    onChange: (e) => setEventId(e.target.value),
+                },
+                    ...data.events.map((ev) => React.createElement('option', { key: ev.id, value: ev.id }, ev.nombre))
+                ),
+                React.createElement('input', {
+                    className: 'border rounded p-2',
+                    list: 'participants-list',
+                    placeholder: 'Búsqueda manual/autocompletar',
+                    value: term,
+                    onChange: (e) => setTerm(e.target.value),
+                }),
+                React.createElement('a', { href: '{{ route('jurado.scanner') }}', className: 'bg-[#004691] text-white rounded p-2 text-center' }, 'Escanear QR')
+            ),
+            React.createElement('datalist', { id: 'participants-list' },
+                ...data.participants.map((p) => React.createElement('option', { key: p.id, value: p.nombre_fonda }))
+            ),
+            React.createElement('div', { className: 'space-y-3' },
+                ...list.map((p) => React.createElement('div', { key: p.id, className: 'bg-white p-4 rounded-xl shadow border' },
+                    React.createElement('div', { className: 'flex justify-between' },
+                        React.createElement('div', null,
+                            React.createElement('div', { className: 'font-bold' }, p.nombre_fonda),
+                            React.createElement('div', { className: 'text-xs text-gray-500' }, p.plato_preparar)
+                        ),
+                        p.evaluaciones?.length
+                            ? React.createElement('span', { className: 'text-xs bg-gray-100 px-2 py-1 rounded' }, 'Ya calificado')
+                            : React.createElement('a', { href: `/evaluar/${p.uuid}`, className: 'bg-blue-600 text-white px-3 py-1 rounded' }, 'Evaluar')
+                    )
+                ))
+            )
+        );
+    }
+
+    const root = document.getElementById('judge-app');
+    createRoot(root).render(React.createElement(App));
 </script>
 @endsection
