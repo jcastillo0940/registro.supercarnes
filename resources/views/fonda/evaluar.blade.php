@@ -18,7 +18,7 @@
             <p class="text-center text-gray-500 italic mt-1 font-medium">Plato: {{ $fonda->plato_preparar }}</p>
         </div>
 
-        <form action="/evaluar/{{ $fonda->id }}" method="POST" class="space-y-8">
+        <form action="{{ route('jurado.evaluar.store', $fonda->uuid) }}" method="POST" class="space-y-8">
             @csrf
             @foreach($criterios as $criterio)
             <div class="bg-white p-5 rounded-2xl shadow-md border border-gray-100">
