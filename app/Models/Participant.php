@@ -10,26 +10,16 @@ class Participant extends Model
 
     protected $fillable = [
         'event_id',
-        'uuid',
         'nombre_persona',
         'cedula',
         'telefono',
         'nombre_fonda',
         'ubicacion',
         'plato_preparar',
-        'datos_extra',
         'qr_code',
         'ajuste_admin',
         'orden_visita',
     ];
-
-
-    protected function casts(): array
-    {
-        return [
-            'datos_extra' => 'array',
-        ];
-    }
 
     public function event()
     {

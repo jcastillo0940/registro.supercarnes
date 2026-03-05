@@ -55,7 +55,6 @@ class FondaController extends Controller
             }
 
             $data['event_id'] = $eventId;
-            $data['uuid'] = (string) Str::uuid();
             $fonda = Participant::create($data);
             
             // Crear directorio de QRs si no existe

@@ -5,8 +5,6 @@ use App\Http\Controllers\FondaController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CriterioController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\LandingController;
-use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\VotacionJuradoController;
 
@@ -41,8 +39,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'role.judge'])->group(function () {
     Route::get('/panel-jurado', [FondaController::class, 'panelJurado'])->name('jurado.panel');
     Route::get('/scanner-qr', [FondaController::class, 'scannerQR'])->name('jurado.scanner');
-    Route::get('/evaluar/{fonda:uuid}', [FondaController::class, 'evaluar'])->name('jurado.evaluar');
-    Route::post('/evaluar/{fonda:uuid}', [FondaController::class, 'guardarEvaluacion']);
+    Route::get('/evaluar/{fonda}', [FondaController::class, 'evaluar'])->name('jurado.evaluar');
+    Route::post('/evaluar/{fonda}', [FondaController::class, 'guardarEvaluacion']);
 });
 
 Route::middleware(['auth', 'role.admin'])->prefix('admin')->group(function () {

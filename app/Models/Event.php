@@ -9,17 +9,13 @@ class Event extends Model
     protected $fillable = [
         'nombre',
         'slug',
-        'tipo_evento',
         'logo',
         'color_primario',
-        'color_secundario',
         'fecha_inicio',
         'fecha_fin',
         'tipo_votacion',
         'estado',
     ];
-
-    protected $appends = ['logo_url'];
 
     protected function casts(): array
     {
@@ -27,11 +23,6 @@ class Event extends Model
             'fecha_inicio' => 'date',
             'fecha_fin' => 'date',
         ];
-    }
-
-    public function getLogoUrlAttribute(): ?string
-    {
-        return $this->logo ? asset('storage/' . $this->logo) : null;
     }
 
     public function participants()
