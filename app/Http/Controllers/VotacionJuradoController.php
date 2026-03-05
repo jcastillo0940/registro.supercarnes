@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Fonda;
+use App\Models\Participant;
 use App\Models\Evaluacion;
 use Illuminate\Http\Request;
 
@@ -36,7 +36,7 @@ class VotacionJuradoController extends Controller
     public function consolidado()
         {
             $jurados = User::whereHas('evaluaciones')->get();
-            $fondas = Fonda::with('evaluaciones')->get();
+            $fondas = Participant::with('evaluaciones')->get();
             
             // Obtenemos los criterios para saber cuántos hay y calcular promedios si fuera necesario
             $totalCriterios = \App\Models\Criterio::count();
@@ -48,7 +48,7 @@ class VotacionJuradoController extends Controller
             $jurados = User::whereHas('evaluaciones')->get();
             
             // Obtenemos las fondas y las ordenamos por la suma de sus puntajes de mayor a menor
-            $fondas = Fonda::with('evaluaciones')
+            $fondas = Participant::with('evaluaciones')
                 ->get()
                 ->sortByDesc(function($fonda) {
                     return $fonda->evaluaciones->sum('puntaje');

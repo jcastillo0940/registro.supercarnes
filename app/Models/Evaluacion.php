@@ -30,7 +30,7 @@ class Evaluacion extends Model
      */
     public function fonda()
     {
-        return $this->belongsTo(Fonda::class, 'fonda_id');
+        return $this->belongsTo(Participant::class, 'fonda_id');
     }
 
     /**
