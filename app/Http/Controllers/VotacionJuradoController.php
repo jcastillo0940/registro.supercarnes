@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Participant;
 use App\Models\Evaluacion;
 use App\Models\Participant;
 use App\Models\User;
@@ -28,28 +30,29 @@ class VotacionJuradoController extends Controller
     }
 
     public function consolidado()
-    {
-        $jurados = User::whereHas('evaluaciones')->get();
-        $fondas = Participant::with('evaluaciones')->get();
-        $totalCriterios = \App\Models\Criterio::count();
-
-        return view('admin.consolidado', compact('jurados', 'fondas', 'totalCriterios'));
-    }
-
-    public function descargarConsolidadoPDF()
-    {
-        $jurados = User::whereHas('evaluaciones')->get();
-
-        $fondas = Participant::query()
-            ->leftJoin('evaluaciones', 'evaluaciones.fonda_id', '=', 'fondas.id')
-            ->select('fondas.*', DB::raw('COALESCE(SUM(evaluaciones.puntaje), 0) as total_puntaje'))
-            ->groupBy('fondas.id')
-            ->orderByDesc('total_puntaje')
-            ->get();
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf_consolidado', compact('jurados', 'fondas'))
-            ->setPaper('a4', 'landscape');
-
-        return $pdf->stream('Consolidado_Oficial_Super_Carnes.pdf');
-    }
+        {
+            $jurados = User::whereHas('evaluaciones')->get();
+            $fondas = Participant::with('evaluaciones')->get();
+            
+            // Obtenemos los criterios para saber cuántos hay y calcular promedios si fuera necesario
+            $totalCriterios = \App\Models\Criterio::count();
+        
+            return view('admin.consolidado', compact('jurados', 'fondas', 'totalCriterios'));
+        }
+        public function descargarConsolidadoPDF()
+        {
+            $jurados = User::whereHas('evaluaciones')->get();
+            
+            // Obtenemos las fondas y las ordenamos por la suma de sus puntajes de mayor a menor
+            $fondas = Participant::with('evaluaciones')
+                ->get()
+                ->sortByDesc(function($fonda) {
+                    return $fonda->evaluaciones->sum('puntaje');
+                });
+        
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf_consolidado', compact('jurados', 'fondas'))
+                      ->setPaper('a4', 'landscape'); 
+        
+            return $pdf->stream('Consolidado_Oficial_Super_Carnes.pdf');
+        }
 }
