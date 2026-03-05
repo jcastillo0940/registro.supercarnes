@@ -182,6 +182,7 @@ class FondaController extends Controller
 
         // Cargar criterios activos
         $criterios = Criterio::where('activo', true)
+                             ->where('event_id', $fonda->event_id)
                              ->orderBy('nombre', 'asc')
                              ->get();
         
@@ -228,6 +229,7 @@ class FondaController extends Controller
         // Verificar que los criterios existan y estén activos
         $criteriosIds = array_keys($validated['puntos']);
         $criteriosValidos = Criterio::whereIn('id', $criteriosIds)
+                                   ->where('event_id', $fonda->event_id)
                                    ->where('activo', true)
                                    ->count();
 

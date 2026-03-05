@@ -13,7 +13,8 @@ use App\Http\Controllers\VotacionJuradoController;
 | Rutas Públicas
 |--------------------------------------------------------------------------
 */
-Route::get('/', [FondaController::class, 'register'])->name('fonda.register');
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/registro', [FondaController::class, 'register'])->name('fonda.register');
 Route::post('/register-fonda', [FondaController::class, 'store'])->name('fonda.store');
 
 /*
