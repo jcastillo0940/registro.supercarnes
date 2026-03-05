@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Event;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -21,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -49,4 +51,10 @@ class User extends Authenticatable
 {
     return $this->hasMany(Evaluacion::class, 'user_id');
 }
+
+    public function events()
+    {
+        return $this->belongsToMany(Event::class, 'event_user')
+            ->withTimestamps();
+    }
 }

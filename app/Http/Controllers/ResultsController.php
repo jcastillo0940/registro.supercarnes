@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Criterio;
+use App\Models\Event;
+use App\Models\Participant;
+use App\Services\CsvService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class ResultsController extends Controller
+{
+    public function publicIndex(Request $request)
+    {
+        return $this->renderResults($request, false);
+    }
+
+    public function adminIndex(Request $request)
+    {
+        return $this->renderResults($request, true);
+    }
+
+    public function exportCsv(Request $request, CsvService $csvService)
+    {
+        [$ranking] = $this->buildRankingData($request);
+        return $csvService->generate($ranking, 'resultados_evento_' . now()->format('Ymd_His') . '.csv');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        [$ranking, $event] = $this->buildRankingData($request);
+
+        $html = '<h2>Resultados Finales - ' . e($event?->nombre ?? 'General') . '</h2><table border="1" cellspacing="0" cellpadding="4"><tr><th>#</th><th>Participante</th><th>Responsable</th><th>Prom. Jueces</th><th>Ajuste</th><th>Final</th><th>Votos Públicos</th></tr>';
+        foreach ($ranking as $row) {
+            $html .= '<tr><td>' . $row['posicion'] . '</td><td>' . e($row['nombre_fonda']) . '</td><td>' . e($row['nombre_persona']) . '</td><td>' . $row['judge_avg'] . '</td><td>' . $row['ajuste_admin'] . '</td><td>' . $row['final_score'] . '</td><td>' . $row['public_votes_count'] . '</td></tr>';
+        }
+        $html .= '</table>';
+
+        $eventSlug = $event?->slug ?? 'general';
+        return Pdf::loadHTML($html)->setPaper('a4', 'landscape')->download("resultados_finales_{$eventSlug}.pdf");
+    }
+
+    private function renderResults(Request $request, bool $isAdmin)
+    {
+        [$ranking, $event, $events, $criterios] = $this->buildRankingData($request, true);
+
+        return $this->reactPage('results.index', [
+            'isAdmin' => $isAdmin,
+            'initialState' => [
+                'ranking' => $ranking,
+                'selectedEventId' => $event?->id,
+                'selectedCriterioId' => $request->integer('criterio_id'),
+                'events' => $events,
+                'criterios' => $criterios,
+            ],
+        ]);
+    }
+
+    private function buildRankingData(Request $request, bool $withContext = false): array
+    {
+        $selectedEventId = $request->integer('event_id');
+        $selectedCriterioId = $request->integer('criterio_id');
+
+        $events = Event::orderBy('nombre')->get(['id', 'nombre', 'slug']);
+        $event = $selectedEventId ? $events->firstWhere('id', $selectedEventId) : $events->first();
+
+        $judgeScores = DB::table('evaluaciones')
+            ->select('fonda_id', DB::raw('AVG(puntaje) as judge_avg'))
+            ->when($selectedCriterioId, fn ($q) => $q->where('criterio_id', $selectedCriterioId))
+            ->groupBy('fonda_id');
+
+        $publicVotes = DB::table('public_votes')
+            ->select('participant_id', DB::raw('COUNT(*) as public_votes_count'))
+            ->groupBy('participant_id');
+
+        $ranking = Participant::query()
+            ->select([
+                'fondas.id', 'fondas.uuid', 'fondas.nombre_fonda', 'fondas.nombre_persona', 'fondas.plato_preparar', 'fondas.ajuste_admin',
+                DB::raw('COALESCE(js.judge_avg, 0) as judge_avg'),
+                DB::raw('COALESCE(pv.public_votes_count, 0) as public_votes_count'),
+                DB::raw('(COALESCE(js.judge_avg, 0) + fondas.ajuste_admin) as final_score'),
+            ])
+            ->leftJoinSub($judgeScores, 'js', fn ($join) => $join->on('js.fonda_id', '=', 'fondas.id'))
+            ->leftJoinSub($publicVotes, 'pv', fn ($join) => $join->on('pv.participant_id', '=', 'fondas.id'))
+            ->when($event, fn ($q) => $q->where('fondas.event_id', $event->id))
+            ->orderByDesc('final_score')
+            ->orderBy('fondas.nombre_fonda')
+            ->get()
+            ->map(fn ($row, $index) => [
+                'posicion' => $index + 1,
+                'id' => $row->id,
+                'uuid' => $row->uuid,
+                'nombre_fonda' => $row->nombre_fonda,
+                'nombre_persona' => $row->nombre_persona,
+                'plato_preparar' => $row->plato_preparar,
+                'judge_avg' => round((float) $row->judge_avg, 2),
+                'ajuste_admin' => (float) $row->ajuste_admin,
+                'final_score' => round((float) $row->final_score, 2),
+                'public_votes_count' => (int) $row->public_votes_count,
+            ])
+            ->values();
+
+        $criterios = collect();
+        if ($event) {
+            $criterios = Criterio::where('event_id', $event->id)->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']);
+        }
+
+        return $withContext ? [$ranking, $event, $events, $criterios] : [$ranking, $event];
+    }
+}
