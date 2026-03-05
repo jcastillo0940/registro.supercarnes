@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Fonda;
+use App\Models\Participant;
 use App\Models\Criterio;
+use App\Models\Event;
 use App\Models\Evaluacion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,7 @@ class FondaController extends Controller
             'nombre_fonda'   => 'required|string|max:255',
             'ubicacion'      => 'required|string|max:500',
             'plato_preparar' => 'required|string|max:500',
+            'event_id' => 'nullable|exists:events,id',
         ], [
             'cedula.unique' => 'Esta cédula ya está registrada en el sistema.',
             'cedula.min' => 'La cédula debe tener al menos 4 caracteres.',
@@ -45,7 +47,14 @@ class FondaController extends Controller
         
         try {
             // Crear la fonda
-            $fonda = Fonda::create($data);
+            $eventId = $data['event_id'] ?? Event::where('estado', 'activo')->value('id') ?? Event::value('id');
+            
+            if (! $eventId) {
+                throw new Exception('No existe un evento configurado para registrar participantes.');
+            }
+
+            $data['event_id'] = $eventId;
+            $fonda = Participant::create($data);
             
             // Crear directorio de QRs si no existe
             // IMPORTANTE: En Hostinger, public_html es el directorio público, no public
@@ -138,7 +147,7 @@ class FondaController extends Controller
     public function panelJurado() 
     {
         // Carga fondas con la relación de evaluaciones filtrada por el usuario actual
-        $fondas = Fonda::with(['evaluaciones' => function($query) {
+        $fondas = Participant::with(['evaluaciones' => function($query) {
             $query->where('user_id', Auth::id());
         }])
         ->orderBy('nombre_fonda', 'asc')
@@ -158,7 +167,7 @@ class FondaController extends Controller
     /**
      * Formulario de Evaluación (Bloquea si ya votó)
      */
-    public function evaluar(Fonda $fonda) 
+    public function evaluar(Participant $fonda) 
     {
         // Validación de voto existente
         $yaVoto = Evaluacion::where('user_id', Auth::id())
@@ -173,6 +182,7 @@ class FondaController extends Controller
 
         // Cargar criterios activos
         $criterios = Criterio::where('activo', true)
+                             ->where('event_id', $fonda->event_id)
                              ->orderBy('nombre', 'asc')
                              ->get();
         
@@ -189,7 +199,7 @@ class FondaController extends Controller
     /**
      * Guarda la evaluación de múltiples criterios
      */
-    public function guardarEvaluacion(Request $request, Fonda $fonda) 
+    public function guardarEvaluacion(Request $request, Participant $fonda) 
     {
         // Re-validación de seguridad (prevenir doble envío)
         $yaVoto = Evaluacion::where('user_id', Auth::id())
@@ -219,6 +229,7 @@ class FondaController extends Controller
         // Verificar que los criterios existan y estén activos
         $criteriosIds = array_keys($validated['puntos']);
         $criteriosValidos = Criterio::whereIn('id', $criteriosIds)
+                                   ->where('event_id', $fonda->event_id)
                                    ->where('activo', true)
                                    ->count();
 
