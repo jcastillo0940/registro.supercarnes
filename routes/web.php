@@ -5,12 +5,14 @@ use App\Http\Controllers\FondaController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CriterioController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\LandingController;
-use App\Http\Controllers\EvaluationController;
-use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\VotacionJuradoController;
 
+/*
+|--------------------------------------------------------------------------
+| Rutas Públicas
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/registro', [FondaController::class, 'register'])->name('fonda.register');
 Route::post('/register-fonda', [FondaController::class, 'store'])->name('fonda.store');
@@ -18,20 +20,27 @@ Route::post('/register-fonda', [FondaController::class, 'store'])->name('fonda.s
 Route::get('/{eventSlug}/registro', [ParticipantController::class, 'create'])->name('participants.register');
 Route::post('/{eventSlug}/registro', [ParticipantController::class, 'store'])->name('participants.store');
 
-Route::get('/votar/{participant:uuid}', [EvaluationController::class, 'publicForm'])->name('public.vote.form');
-Route::post('/votar/{participant:uuid}', [EvaluationController::class, 'storePublic'])->name('public.vote.store');
-
+/*
+|--------------------------------------------------------------------------
+| Autenticación
+|--------------------------------------------------------------------------
+*/
 Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+/*
+|--------------------------------------------------------------------------
+| Rutas Protegidas
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role.judge'])->group(function () {
     Route::get('/panel-jurado', [FondaController::class, 'panelJurado'])->name('jurado.panel');
     Route::get('/scanner-qr', [FondaController::class, 'scannerQR'])->name('jurado.scanner');
-    Route::get('/evaluar/{fonda:uuid}', [FondaController::class, 'evaluar'])->name('jurado.evaluar');
-    Route::post('/evaluar/{fonda:uuid}', [EvaluationController::class, 'storeJudge'])->name('jurado.evaluar.store');
+    Route::get('/evaluar/{fonda}', [FondaController::class, 'evaluar'])->name('jurado.evaluar');
+    Route::post('/evaluar/{fonda}', [FondaController::class, 'guardarEvaluacion']);
 });
 
 Route::middleware(['auth', 'role.admin'])->prefix('admin')->group(function () {
@@ -55,5 +64,7 @@ Route::middleware(['auth', 'role.admin'])->prefix('admin')->group(function () {
     Route::post('/guardar-orden', [AdminController::class, 'guardarOrden'])->name('admin.guardarOrden');
     Route::get('/descargar-pdf', [AdminController::class, 'descargarPDF'])->name('admin.pdf');
 
-    Route::resource('/events', EventController::class)->names('admin.events')->except('show');
+    Route::resource('/events', EventController::class)
+        ->names('admin.events')
+        ->except('show');
 });

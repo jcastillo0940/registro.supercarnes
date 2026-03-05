@@ -39,15 +39,18 @@ class FondaController extends Controller
         DB::beginTransaction();
 
         try {
+            // Crear la fonda
             $eventId = $data['event_id'] ?? Event::where('estado', 'activo')->value('id') ?? Event::value('id');
+            
             if (! $eventId) {
                 throw new Exception('No existe un evento configurado para registrar participantes.');
             }
 
             $data['event_id'] = $eventId;
-            $data['uuid'] = (string) Str::uuid();
             $fonda = Participant::create($data);
-
+            
+            // Crear directorio de QRs si no existe
+            // IMPORTANTE: En Hostinger, public_html es el directorio público, no public
             $qrDirectory = base_path('public_html/qrs');
             if (! file_exists($qrDirectory)) {
                 mkdir($qrDirectory, 0777, true);
@@ -57,9 +60,14 @@ class FondaController extends Controller
             $qrFileName = 'fonda_' . $fonda->id . '.png';
             $qrPath = 'qrs/' . $qrFileName;
             $qrFullPath = base_path('public_html/' . $qrPath);
+            
+            // URL que contendrá el QR
             $qrUrl = url('/evaluar/' . $fonda->uuid);
-
-            $qrGenerator = new QrCodeGenerator();
+            
+            // SOLUCIÓN: Usar instancia directa (igual que el test exitoso)
+            $qrGenerator = new QrCodeGenerator;
+            
+            // Limpiar cualquier salida previa
             while (ob_get_level()) {
                 ob_end_clean();
             }
@@ -92,23 +100,14 @@ class FondaController extends Controller
 
     public function panelJurado()
     {
-        $user = Auth::user();
-        $events = $user->events()->orderBy('nombre')->get(['events.id', 'events.nombre', 'events.slug']);
-        $eventIds = $events->pluck('id');
+        // Carga fondas con la relación de evaluaciones filtrada por el usuario actual
+        $fondas = Participant::with(['evaluaciones' => function($query) {
+            $query->where('user_id', Auth::id());
+        }])
+        ->orderBy('nombre_fonda', 'asc')
+        ->get();
 
-        $fondas = Participant::whereIn('event_id', $eventIds)
-            ->with(['event:id,nombre', 'evaluaciones' => function ($query) {
-                $query->where('user_id', Auth::id());
-            }])
-            ->orderBy('nombre_fonda', 'asc')
-            ->get(['id', 'uuid', 'event_id', 'nombre_fonda', 'plato_preparar']);
-
-        return view('jurado.index', [
-            'initialState' => [
-                'events' => $events,
-                'participants' => $fondas,
-            ],
-        ]);
+        return view('jurado.index', compact('fondas'));
     }
 
     public function scannerQR()
@@ -116,13 +115,38 @@ class FondaController extends Controller
         return view('jurado.scanner');
     }
 
-    public function evaluar(Participant $fonda)
+    /**
+     * Formulario de Evaluación (Bloquea si ya votó)
+     */
+    public function evaluar(Participant $fonda) 
     {
         $judge = Auth::user();
         if (! $judge->events()->where('events.id', $fonda->event_id)->exists()) {
             abort(403, 'No tienes permiso para evaluar este evento.');
         }
 
+        // Cargar criterios activos
+        $criterios = Criterio::where('activo', true)
+                             ->where('event_id', $fonda->event_id)
+                             ->orderBy('nombre', 'asc')
+                             ->get();
+        
+        // Verificar que haya criterios disponibles
+        if ($criterios->isEmpty()) {
+            return redirect()
+                ->route('jurado.panel')
+                ->with('error', 'No hay criterios de evaluación disponibles en este momento.');
+        }
+
+        return view('fonda.evaluar', compact('fonda', 'criterios'));
+    }
+
+    /**
+     * Guarda la evaluación de múltiples criterios
+     */
+    public function guardarEvaluacion(Request $request, Participant $fonda) 
+    {
+        // Re-validación de seguridad (prevenir doble envío)
         $yaVoto = Evaluacion::where('user_id', Auth::id())
             ->where('fonda_id', $fonda->id)
             ->exists();
@@ -131,10 +155,26 @@ class FondaController extends Controller
             return redirect()->route('jurado.panel')->with('error', 'Ya has calificado esta fonda anteriormente.');
         }
 
-        $criterios = Criterio::where('activo', true)
-            ->where('event_id', $fonda->event_id)
-            ->orderBy('nombre', 'asc')
-            ->get();
+        // Validación de datos con rangos de puntaje
+        $validated = $request->validate([
+            'puntos' => 'required|array|min:1',
+            'puntos.*' => 'required|integer|min:0|max:10',
+            'notas' => 'nullable|string|max:1000'
+        ], [
+            'puntos.required' => 'Debes calificar al menos un criterio.',
+            'puntos.*.required' => 'Todos los criterios deben tener una calificación.',
+            'puntos.*.integer' => 'La calificación debe ser un número entero.',
+            'puntos.*.min' => 'El puntaje mínimo es 0.',
+            'puntos.*.max' => 'El puntaje máximo es 10.',
+            'notas.max' => 'Las notas no pueden exceder 1000 caracteres.',
+        ]);
+
+        // Verificar que los criterios existan y estén activos
+        $criteriosIds = array_keys($validated['puntos']);
+        $criteriosValidos = Criterio::whereIn('id', $criteriosIds)
+                                   ->where('event_id', $fonda->event_id)
+                                   ->where('activo', true)
+                                   ->count();
 
         if ($criterios->isEmpty()) {
             return redirect()->route('jurado.panel')->with('error', 'No hay criterios de evaluación disponibles en este momento.');

@@ -81,8 +81,7 @@
                                 }, 'Aplicar diseño')
                             ),
                             React.createElement('p', { className: 'text-sm' }, `${event.fecha_inicio || 'Por definir'} - ${event.fecha_fin || 'Por definir'}`),
-                            React.createElement('p', { className: 'text-xs mt-2 uppercase tracking-wide text-slate-500' }, `Tipo de votación: ${event.tipo_votacion}`),
-                            React.createElement('a', { href: `/${event.slug}/registro`, className: 'inline-block mt-3 text-sm underline' }, 'Ir al registro')
+                            React.createElement('p', { className: 'text-xs mt-2 uppercase tracking-wide text-slate-500' }, `Tipo de votación: ${event.tipo_votacion}`)
                         ))
                     )
             );
