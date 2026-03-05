@@ -17,8 +17,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [LandingController::class, 'index'])->name('landing');
-Route::get('/{eventSlug}/registro', [ParticipantController::class, 'create'])->name('participants.register');
-Route::post('/{eventSlug}/registro', [ParticipantController::class, 'store'])->name('participants.store');
+Route::get('/c/{eventSlug}/registro', [ParticipantController::class, 'create'])->name('participants.register');
+Route::post('/c/{eventSlug}/registro', [ParticipantController::class, 'store'])->name('participants.store');
 
 /*
 |--------------------------------------------------------------------------
